@@ -1,43 +1,38 @@
-pipeline {
+pipeline{
     agent any
-
-    environment {
-        DOCKER_IMAGE = 'yourdockerhubusername/html-cicd'
-        DOCKER_CREDENTIALS_ID = 'docker-hub-creds' // Jenkins credentials ID
+    environment{
+        GIT_REPO = 'https://github.com/Abhishek3807/test'
+        BRANCH = 'master'
     }
-
     stages {
-        stage('Clone Repository') {
-            steps {
-                git 'https://github.com/yourusername/html-cicd.git'
+        stage('Clone'){
+            steps{
+                git branch : "${BRANCH}" , url : "${GIT_REPO}"
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
-                }
+        stage('Build Docker Image'){
+            steps{
+                echo 'Building docker image for html page'
+                bat 'docker build -t static-html-site .'
             }
         }
+        stage('Deploy docker container'){
+            steps{
+                echo 'stopping old container if exists'
+                bat 'docker rm -f html-container || exho "no container to remove"' 
 
-        stage('Push to Docker Hub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh '''
-                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                            docker push $DOCKER_IMAGE
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Deploy (Optional)') {
-            steps {
-                echo 'Deployment step can be added here (e.g., SSH into server, pull and run container)'
+                echo "running new container"
+                bat 'docker run -d -p 8085:80 --name html-container static-html-site'
             }
         }
     }
+    post{
+        success{
+            echo 'static html site deployed successfully!'
+        }
+        failure{
+            echo 'pipeline failed!'
+        }
+    }
+
 }
