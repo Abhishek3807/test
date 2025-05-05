@@ -2,7 +2,7 @@ pipeline{
     agent any
     environment{
         GIT_REPO = 'https://github.com/Abhishek3807/test'
-        BRANCH = 'master'
+        BRANCH = 'main'
     }
     stages {
         stage('Clone'){
